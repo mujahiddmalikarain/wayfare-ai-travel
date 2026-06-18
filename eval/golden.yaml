@@ -1,0 +1,83 @@
+# Golden travel queries. `expect` holds the structured fields we can check
+# automatically; relevance/faithfulness are scored by hand in EVAL.md.
+- id: nl-lisbon-balcony
+  type: nl
+  query: "a quiet 1-bed in Lisbon under €130 with a balcony for late June"
+  city: Lisbon
+  expect:
+    city: Lisbon
+    max_price: 130
+    amenities: [balcony]
+    room_type: "Entire home/apt"
+
+- id: nl-lisbon-pool
+  type: nl
+  query: "place in Lisbon with parking and a pool, max €250 a night"
+  city: Lisbon
+  expect:
+    city: Lisbon
+    max_price: 250
+    amenities: [parking, pool]
+
+- id: nl-barcelona-room
+  type: nl
+  query: "cheap private room in Barcelona for 2 guests with wifi"
+  city: Barcelona
+  expect:
+    city: Barcelona
+    guests: 2
+    room_type: "Private room"
+    amenities: [wifi]
+
+- id: nl-barcelona-family
+  type: nl
+  query: "family apartment in Barcelona for 4 guests with wifi and a kitchen under €200"
+  city: Barcelona
+  expect:
+    city: Barcelona
+    guests: 4
+    max_price: 200
+    amenities: [wifi, kitchen]
+
+- id: concierge-lisbon-consistent
+  type: concierge
+  query: >-
+    Find me a quiet 1-bedroom in Lisbon near good restaurants for 3 nights in late
+    June, under €130 a night, balcony if possible, no party-type buildings, and
+    tell me which one has the most consistent reviews.
+  city: Lisbon
+  expect:
+    city: Lisbon
+    max_price: 130
+    amenities: [balcony]
+    path: review
+
+- id: concierge-barcelona-itinerary
+  type: concierge
+  query: >-
+    Plan a 4-night Barcelona trip for a couple with one mid-range place near the
+    metro and one splurge night somewhere with a view. Budget €1000 total. Avoid
+    El Raval.
+  city: Barcelona
+  expect:
+    city: Barcelona
+    exclude_neighbourhoods: [El Raval]
+    multi_stop: true
+    path: itinerary
+
+- id: concierge-lisbon-water
+  type: concierge
+  query: "Find a highly rated stay near the water in Lisbon with a kitchen."
+  city: Lisbon
+  expect:
+    city: Lisbon
+    amenities: [kitchen]
+    path: review
+
+# Failure case: no city. The system must degrade gracefully, not crash.
+- id: failure-no-city
+  type: concierge
+  query: "find me somewhere nice and quiet for a long weekend"
+  city: null
+  expect:
+    graceful: true

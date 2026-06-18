@@ -1,0 +1,58 @@
+# Render Blueprint — provisions the backend stack:
+#   travel-db    : Postgres 16 with PostGIS + pgvector (our custom image)
+#   travel-redis : managed Redis (retrieval / synthesis cache)
+#   travel-api   : FastAPI service (Docker)
+#
+# The frontend (web/) deploys separately on Vercel — see DEPLOY.md.
+# Values marked `sync: false` must be filled in the Render dashboard once.
+services:
+  # Postgres with PostGIS + pgvector. Render's managed Postgres has neither
+  # extension, so we run our own image as a private service with a disk.
+  - type: pserv
+    name: travel-db
+    env: docker
+    dockerfilePath: ./docker/db/Dockerfile
+    dockerContext: ./docker/db
+    plan: standard
+    disk:
+      name: pgdata
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
+    envVars:
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_DB
+        value: travel
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+
+  - type: redis
+    name: travel-redis
+    plan: free
+    ipAllowList: []  # internal-only
+
+  - type: web
+    name: travel-api
+    env: docker
+    dockerfilePath: ./docker/backend/Dockerfile
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: travel-redis
+          property: connectionString
+      # Compose from the db service: postgresql://postgres:<pw>@<host>:5432/travel
+      # Set in the dashboard, or wire DB_HOST/DB_PASSWORD below into a start hook.
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: INTENT_MODEL
+        value: gpt-4o-mini
+      - key: SYNTHESIS_MODEL
+        value: gpt-4o-mini
+      - key: EMBEDDING_MODEL
+        value: text-embedding-3-small

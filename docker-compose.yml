@@ -1,0 +1,63 @@
+services:
+  db:
+    build: ./docker/db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: travel
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d travel"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/travel
+      REDIS_URL: redis://redis:6379/0
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  # One-off ingestion. Run with:  docker compose --profile seed run --rm ingest
+  ingest:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    profiles: ["seed"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/travel
+      DATA_DIR: /app/data
+    volumes: ["./data:/app/data:ro"]
+    depends_on:
+      db: {condition: service_healthy}
+    command: ["python", "-m", "ingestion"]
+
+  # Frontend (added with the Next.js package). Run with `--profile web`.
+  web:
+    build: ./web
+    profiles: ["web"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports: ["3000:3000"]
+    depends_on: ["api"]
+
+volumes:
+  pgdata:
