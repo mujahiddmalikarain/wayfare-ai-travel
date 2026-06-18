@@ -54,7 +54,13 @@ demo seed (it prioritizes the most-reviewed listings). Set `0` for a full run.
 
 1. **New Project** → import this repo → set **Root Directory** to `web`.
 2. Environment variable: `NEXT_PUBLIC_API_URL=https://travel-api-XXXX.onrender.com`.
-3. Deploy. Vercel detects Next.js automatically.
+3. Deploy. Vercel detects Next.js automatically (`web/vercel.json` pins the framework).
+
+> **"No Output Directory named public"** — Vercel is treating the app as a static
+> site. In **Project Settings → Build & Development Settings**:
+> - **Root Directory** must be `web` (not the repo root).
+> - **Framework Preset** must be **Next.js**.
+> - **Output Directory** must be **empty** (do not set `public`; Next.js outputs to `.next` and Vercel handles that automatically). Remove any Production Override for Output Directory if you see a yellow warning banner.
 
 > If you instead host the frontend on Render as a web service, change the start
 > script to bind Render's port: `next start -p $PORT`.
