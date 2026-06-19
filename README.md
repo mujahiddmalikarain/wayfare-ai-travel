@@ -10,6 +10,7 @@ The application is built on real [Inside Airbnb](https://insideairbnb.com/get-th
 
 | Service | URL |
 |---|---|
+| Demo video | https://www.loom.com/share/320e3842a54f41c4a35ea2b9851cc953 |
 | Web application | https://wayfare-ai-travel.vercel.app/ |
 | API documentation | https://wayfare-ai-travel.onrender.com/docs |
 | API health check | https://wayfare-ai-travel.onrender.com/health |
