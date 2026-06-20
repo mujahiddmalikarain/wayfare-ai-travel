@@ -1,0 +1,34 @@
+---
+description: Next.js frontend conventions for web/
+globs: web/**/*
+alwaysApply: false
+---
+
+# Wayfare Frontend
+
+## Config
+
+- API base: `process.env.NEXT_PUBLIC_API_URL` in `web/lib/api.ts` — must be set at Vercel build time
+- Local dev: copy `web/.env.example` → `web/.env.local`
+
+## City Toggle
+
+- Active city lives in Zustand (`web/lib/store.ts` → `city` / `setCity`)
+- `TopBar` uses buttons + `router.replace`, not URL-only local state
+- `CitySync` keeps URL `?city=` and store aligned
+- Search page reads city from store; patch handlers call `setCity` when filters include city
+
+## Components
+
+- `"use client"` only where needed (hooks, map, store, SSE)
+- Map: MapLibre + OSM tiles in `ResultsMap.tsx`; refit on new search via `fitKey`
+- Concierge: SSE via `web/lib/stream.ts`; dock in `ConciergeDock.tsx`
+
+## UI
+
+- Palette: brand blue + amber accent; fonts Bricolage Grotesque + Inter (see `layout.tsx`)
+- Keep booking-style UX; AI features show understood filter chips and agent steps
+
+## Docker
+
+- Production image runs `next start`; rebuild image after frontend changes when using `docker compose --profile web`

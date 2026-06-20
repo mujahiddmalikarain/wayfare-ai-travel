@@ -1,0 +1,46 @@
+---
+description: Wayfare core architecture, conventions, and agent behavior
+alwaysApply: true
+---
+
+# Wayfare — Project Rules
+
+## Stack
+
+- **Frontend**: Next.js 14 (`web/`), MapLibre, Zustand, Tailwind
+- **Backend**: FastAPI async (`api/`), LangGraph concierge, SSE streaming
+- **Data**: Postgres 16 + PostGIS + pgvector (single engine), Redis cache
+- **Ingestion**: Re-runnable pipeline in `ingestion/` (`make seed`)
+- **Cities**: Lisbon and Barcelona (Title-case in API/UI, lowercase in `CITIES` env)
+
+## Repository Layout
+
+```
+api/           FastAPI routers, agents, repository (SQL lives here)
+ingestion/     Load + enrich stages (schema, listings, embeddings, summaries)
+web/           Next.js app (deploy root on Vercel)
+docker/        db + backend Dockerfiles
+schema.sql     Idempotent DDL (also applied by ingestion schema stage)
+```
+
+## Agent Principles
+
+- **Minimal diffs** — fix the requested issue; do not refactor unrelated code
+- **Match existing style** — naming, types, and patterns in surrounding files
+- **No secrets in git** — never commit `.env`, `api/.env`, or `data/`; use `.env.example` templates
+- **Tests** — add only when requested or when covering real behavior
+- **Comments** — only for non-obvious business or SQL logic
+
+## Deployment
+
+- **Backend**: Render (Docker) — `travel-api`, private `travel-db`, Redis
+- **Frontend**: Vercel — root directory `web`, env `NEXT_PUBLIC_API_URL` (build-time)
+- **DB seed**: `pg_dump -Fc` via `docker compose cp` (never PowerShell `>` redirect on binary dumps)
+- **Render DB host**: use Internal Connect address (e.g. `travel-db-xxxx:5432`), not bare service name
+
+## Live URLs
+
+- Web: https://wayfare-ai-travel.vercel.app
+- API: https://wayfare-ai-travel.onrender.com
+
+See [DEPLOY.md](DEPLOY.md) for full steps.

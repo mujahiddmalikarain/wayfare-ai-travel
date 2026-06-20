@@ -1,0 +1,33 @@
+---
+description: FastAPI, ingestion, and database conventions
+globs: "{api,ingestion,docker,schema.sql}/**/*"
+alwaysApply: false
+---
+
+# Wayfare Backend
+
+## API
+
+- Entry: `api/main.py` — lifespan wires pool, Redis, LLM, LangGraph
+- Routers: `api/routers/` — traditional search + `/concierge/stream` (SSE)
+- All SQL in `api/repository.py` — hybrid retrieval (filters + pgvector + PostGIS) in one query
+- Settings via pydantic `api/config.py` — required: `DATABASE_URL`, `OPENAI_API_KEY`; optional models have defaults
+- CORS is open (`allow_origins=["*"]`) for Vercel frontend
+
+## Ingestion
+
+- Run: `make seed` or `python -m ingestion`
+- Cities from `CITIES` env (lowercase paths under `data/`)
+- Stages are idempotent (`ON CONFLICT` upserts); schema stage enables extensions
+- `SUMMARY_MAX_LISTINGS` caps review-summary LLM cost for demo seeds
+
+## Database
+
+- Custom image: `docker/db/Dockerfile` (PostGIS + pgvector) — do not use Render managed Postgres
+- City values in DB use `city.title()` → `"Lisbon"`, `"Barcelona"` (match frontend/API params)
+- Local dump: `docker compose exec db pg_dump -U postgres -Fc -f /tmp/seed.dump travel` then `docker compose cp`
+
+## Agents
+
+- Graph: `api/agents/graph.py` — intent → retrieval → review | itinerary
+- Use env models (`INTENT_MODEL`, `SYNTHESIS_MODEL`, `EMBEDDING_MODEL`); default `gpt-4o-mini`
